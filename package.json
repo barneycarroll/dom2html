@@ -1,29 +1,29 @@
 {
-  "name": "mithril-node-render",
-  "version": "0.5.0",
-  "description": "Node rending of mithril views",
+  "name": "dom2html",
+  "version": "0.0.0",
+  "description": "Convert DOM-like Javascript objects to HTML strings",
   "main": "index.js",
   "scripts": {
-    "test": "node_modules/tape/bin/tape test.js"
+    "test": "tape test.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/StephanHoyer/mithril-node-render.git"
+    "url": "https://github.com/barneycarroll/dom2html.git"
   },
   "keywords": [
-    "mithril",
-    "node",
-    "render",
-    "template"
+    "dom",
+    "to",
+    "html",
+    "convert",
+    "javascript"
   ],
-  "author": "Stephan Hoyer <ste.hoyer@gmail.com>",
+  "author": "Barney Carroll <barney.carroll@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/StephanHoyer/mithril-node-render/issues"
+    "url": "https://github.com/barneycarroll/dom2html/issues"
   },
-  "homepage": "https://github.com/StephanHoyer/mithril-node-render",
+  "homepage": "https://github.com/barneycarroll/dom2html",
   "devDependencies": {
-    "mithril": "0.2.5",
     "tape": "4.6.2"
   }
 }

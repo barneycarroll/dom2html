@@ -1,41 +1,68 @@
-mithril-node-render
-===================
-[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/StephanHoyer/mithril-node-render?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build Status](https://travis-ci.org/StephanHoyer/mithril-node-render.svg?branch=master)](https://travis-ci.org/StephanHoyer/mithril-node-render)
-[![rethink.js](https://img.shields.io/badge/rethink-js-yellow.svg)](https://github.com/rethinkjs/manifest)
-[![Dependency Status](https://david-dm.org/stephanhoyer/mithril-node-render.svg)](https://david-dm.org/stephanhoyer/mithril-node-render)
-[![devDependency Status](https://david-dm.org/stephanhoyer/mithril-node-render/dev-status.svg)](https://david-dm.org/stephanhoyer/mithril-node-render#info=devDependencies)
+# dom2html
 
-Use mithril views to render server side
+***
 
-Usage
------
+Status: embryonic
 
-```javascript
-var m = require('mithril');
-var render = require('mithril-node-render');
+***
 
-render(m('span', 'huhu')) //<span>huhu</span>
+Install:
+
+```sh
+npm i dom2html
 ```
 
-Options
--------
+Use:
 
-Optionally pass in options as an object: `m.render(component, options)`.
+```javascript
+var dom2html = require( 'dom2html' )
 
-The following options are supported:
+var dom_like = {
+  nodeType : 1,
+  tagName : 'div',
+  attributes : [
+    {
+      nodeName  : 'id',
+      nodeValue : 'main'
+    },
+    {
+      nodeName  : 'class',
+      nodeValue : 'wrapper border'
+    },
+    {
+      nodeName  : 'contenteditable',
+      nodeValue : true
+    }
+  ],
+  children : [
+    {
+      nodeType : 3,
+      nodeValue : 'Hello'
+    },
+    {
+      nodeType : 1,
+      tagName  : 'hr'
+    }
+  ]
+}
 
-**escapeAttributeValue(value)**  
-`Default: render.escapeHtml`  
-A filter function for attribute values. Receives value, returns what is printed.
+var html = dom2html( dom_like )
+```
 
-**escapeString(value)**  
-`Default: render.escapeHtml`  
-A filter function for string nodes. Receives value, returns what is printed.
+Results in:
 
+```html
+<div id="main" class="foo bar" contenteditable>Hello<hr/></div>
+```
 
-See also
---------
+## What?
 
-* [Blog post](https://gist.github.com/StephanHoyer/bddccd9e159828867d2a) about isomorphic mithril applications
-* [Usage Example](https://github.com/StephanHoyer/mithril-isomorphic-example/blob/master/README.md)
+Convert DOM-like Javascript objects to HTML strings. DOM-like, in that only the subset of DOM necessary to produce static HTML strings is required - the vast majority of the DOM spec is irrelevant to this task, and thus most mocked DOM implementations are compliant.
+
+## Why?
+
+DOM libraries often use DOM mocks for the purposes of Node-based test suites. This tool was devised with the aim of taking snapshots of DOM structures during web component tests in order to produce static, visually analysable artefacts to correspond to test states. Using a DOM mock and a decent internal API allows you to easily write & execute functional tests - by integrating dom2html into the workflow you can also get a picture at salient points of the test suite, allowing you make sure your components look OK as well as passing logical tests.
+
+## How?
+
+I was surprised not to be able to find an existing Node library to convert DOM to HTML, but most of the necessary work has already been done - dom2html was forked from Stephan Hoyer's [mithril-node-render](https://github.com/StephanHoyer/mithril-node-render), which converts [Mithril](https://github.com/lhorie/mithril.js)'s virtual DOM structures to HTML.

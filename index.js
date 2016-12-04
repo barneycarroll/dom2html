@@ -4,10 +4,6 @@ var VOID_TAGS = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr',
   'img', 'input', 'keygen', 'link', 'meta', 'param', 'source', 'track',
   'wbr', '!doctype']
 
-function isArray (thing) {
-  return Object.prototype.toString.call(thing) === '[object Array]'
-}
-
 function camelToDash (str) {
   return str.replace(/\W+/g, '-')
     .replace(/([a-z\d])([A-Z])/g, '$1-$2')
@@ -19,65 +15,45 @@ function removeEmpties (n) {
 
 // shameless stolen from https://github.com/punkave/sanitize-html
 function escapeHtml (s, replaceDoubleQuote) {
-  if (s === 'undefined') {
+  if (s === 'undefined')
     s = ''
-  }
-  if (typeof (s) !== 'string') {
+
+  if (typeof s !== 'string')
     s = s + ''
-  }
+
   s = s.replace(/\&/g, '&amp;').replace(/</g, '&lt;').replace(/\>/g, '&gt;')
-  if (replaceDoubleQuote) {
+
+  if (replaceDoubleQuote)
     return s.replace(/\"/g, '&quot;')
-  }
+
   return s
 }
 
-function createAttrString (view, escapeAttributeValue) {
-  var attrs = view.attrs
+function createAttrString (node, escapeAttributeValue) {
+  var attrs = node.attributes
 
-  if (!attrs || !Object.keys(attrs).length) {
+  if (!attrs || !Object.keys(attrs).length)
     return ''
-  }
 
-  return Object.keys(attrs).map(function (name) {
-    var value = attrs[name]
-    if (typeof value === 'undefined' || value === null || typeof value === 'function') {
+  return Array.prototype.map.call(attributes, function (attr) {
+    var name  = attr.nodeName
+    var value = attr.nodeValue
+
+    if (value == null || typeof value === 'function')
       return
-    }
-    if (typeof value === 'boolean') {
+
+    if (typeof value === 'boolean')
       return value ? ' ' + name : ''
-    }
-    if (name === 'style') {
-      if (!value) {
-        return
-      }
-      var styles = attrs.style
-      if (typeof styles === 'object') {
-        styles = Object.keys(styles).map(function (property) {
-          return styles[property] !== '' ? [camelToDash(property).toLowerCase(), styles[property]].join(':') : ''
-        }).filter(removeEmpties).join(';')
-      }
-      return styles !== '' ? ' style="' + escapeAttributeValue(styles, true) + '"' : ''
-    }
 
     // Handle SVG <use> tags specially
-    if (name === 'href' && view.tag === 'use') {
+    if (name === 'href' && node.tagName === 'use')
       return ' xlink:href="' + escapeAttributeValue(value, true) + '"'
-    }
 
     return ' ' + (name === 'className' ? 'class' : name) + '="' + escapeAttributeValue(value, true) + '"'
   }).join('')
 }
 
-function createChildrenContent (view) {
-  if (isArray(view.children) && !view.children.length) {
-    return ''
-  }
-
-  return render(view.children)
-}
-
-function render (view, options) {
+function render (node, options) {
   options = options || {}
 
   var defaultOptions = {
@@ -89,45 +65,53 @@ function render (view, options) {
     if (!options.hasOwnProperty(key)) options[key] = defaultOptions[key]
   })
 
-  var type = typeof view
-
-  if (type === 'string') {
-    return options.escapeString(view)
-  }
-
-  if (type === 'number' || type === 'boolean') {
-    return view
-  }
-
-  if (!view) {
+  if (!node)
     return ''
+
+  if (typeof node === 'string')
+    return node
+
+  if (node.outerHTML){
+    console.warn("The DOM object supplied implements `outerHTML` - you may not need dom2html")
+
+    return node.outerHTML
   }
 
-  if (isArray(view)) {
-    return view.map(function (view) { return render(view, options) }).join('')
-  }
+  if (node.nodeType === 3 || node.nodeName === '#text')
+    return options.escapeString(node.nodeValue)
 
-  // compontent
-  if (view.view) {
-    var scope = view.controller ? new view.controller() : {}
-    var result = render(view.view(scope), options)
-    if (scope.onunload) {
-      scope.onunload()
-    }
-    return result
-  }
+  if (node.nodeType === 8 || node.nodeName === '#comment')
+    return '<!--' + node.nodeValue + '>'
 
-  if (view.$trusted) {
-    return '' + view
-  }
-  var children = createChildrenContent(view)
-  if (!children && VOID_TAGS.indexOf(view.tag.toLowerCase()) >= 0) {
-    return '<' + view.tag + createAttrString(view, options.escapeAttributeValue) + '>'
-  }
+  var children = (
+    node.childNodes
+    ? Array.prototype.map.call(node.childNodes, function (node) { return render(node, options) }).join('')
+    : node.innerHTML   ? node.innerHTML
+    : node.textContent ? node.textContent
+    : node.children
+    ? Array.prototype.map.call(node.children,   function (node) { return render(node, options) }).join('')
+    : node.text        ? node.text
+    : ''
+  )
+
+  if (node.nodeType === 11 || node.nodeName === '#fragment')
+    return children
+
+  var tagName = node.tagName
+
+  if ( !tagName && node.nodeName )
+    tagName = node.nodeName.toLowerCase()
+
+  if ( !tagName )
+    throw "Couldn't determine node type"
+
+  if (!children && VOID_TAGS.indexOf(tagName.toLowerCase()) >= 0)
+    return '<' + tagName + createAttrString(node, options.escapeAttributeValue) + '/>'
+
   return [
-    '<', view.tag, createAttrString(view, options.escapeAttributeValue), '>',
+    '<', tagName, createAttrString(node, options.escapeAttributeValue), '>',
     children,
-    '</', view.tag, '>'
+    '</', tagName, '>'
   ].join('')
 }
 
